@@ -1,0 +1,20 @@
+{
+    "name": "node-list",
+    "version": "0.0.1",
+    "description": "Yet another list.",
+    "author": "Nate Fitch <nfitch@nfprod.com>",
+    "engine": [ "node >=17.0.0" ],
+    "private": true,
+    "keywords": [],
+    "dependencies": {
+        "fastify": "4.10.2"
+    },
+    "devDependencies": {
+        "jest": "29.3"
+    },
+    "scripts": {
+        "test": "jest"
+    },
+    "files": [],
+    "main": "app"
+}
