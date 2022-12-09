@@ -7,7 +7,8 @@
     "private": true,
     "keywords": [],
     "dependencies": {
-        "fastify": "4.10.2"
+        "fastify": "4.10.2",
+        "@fastify/static": "6.6.0"
     },
     "devDependencies": {
         "jest": "29.3"
