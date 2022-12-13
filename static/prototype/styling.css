@@ -23,15 +23,18 @@
     margin: 4px;
 }
 
+/* Starts unselected. */
 .list-end-cursor {
-    border-color: #000080;
     border-style: solid;
     border-radius: 2px;
+    background-color: #FFFFFF;
+    height: 1px;
+
+    border-color: #BEBEBE;
     border-width: 1px;
-    background-color: #000080;
-    height: 4px;
-    padding: 0px;
+    padding: 1px;
     margin: 2px;
+
 }
 
 .list-element {
