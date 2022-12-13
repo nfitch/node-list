@@ -3,7 +3,6 @@
     <title>Vanilla Prototype</title>
     <link rel="stylesheet" href="styling.css">
     <script type="text/javascript">
-      var cursor = null;
       var selection = null;
 
       function keyHandler(eve) {
@@ -19,10 +18,7 @@
           } else if (eve.keyCode === 8) { //Backspace
               backspace();
           } else if (eve.keyCode === 13) { //\n
-              // Or should we insert a new element after the current?
-              if (selection.nextElementSibling) {
-                  selection = select(selection.nextElementSibling);
-              }
+              addAndSelectAfter(selection);
           } else if (eve.keyCode === 38) { //Up
               if (selection.previousElementSibling) {
                   selection = select(selection.previousElementSibling);
@@ -64,52 +60,53 @@
       }
 
       function backspace() {
-          if (selection === cursor) {
-              //Try to select the one before
-              if (cursor !== cursor.parentElement.firstElementChild) {
-                  selection = select(cursor.previousSibling);
-              }
-          } else if (selection) {
+          if (selection) {
               //Is a div, has text, take off the last character
               if (selection.innerText !== "") {
                   selection.innerText = selection.innerText.slice(0, -1);
               } else {
-                  //Remove the node and either select the previous
-                  // or the cursor.
-                  var toSelect = cursor;
+                  //Remove until there's only a blank element
                   if (selection.previousElementSibling !== null) {
-                      toSelect = selection.previousSibling;
+                      toSelect = selection.previousElementSibling;
+                      selection.remove();
+                      selection = select(toSelect);
+                  } else if (selection.nextElementSibling !== null) {
+                      toSelect = selection.nextElementSibling;
+                      selection.remove();
+                      selection = select(toSelect);
                   }
-                  selection.remove();
-                  selection = select(toSelect);
               }
           }
       }
 
+      function newDiv() {
+          var div = document.createElement('div');
+          div.classList.add('list-element');
+          return div;
+      }
+
+      function addAndSelectAfter(e) {
+          var div = newDiv();
+          e.after(div);
+          selection = select(div);
+      }
+
       function appendSelection(s) {
-          if (!selection || selection === cursor) {
-              //Add a new element right above the cursor,
-              // show that it's selected
-              var div = document.createElement('div');
-              div.classList.add('list-element');
-              cursor.parentElement.insertBefore(div, cursor);
-              selection = select(div);
-          }
           //Append to the selection
           selection.innerHTML += s;
       }
 
       function init() {
-          cursor = selection = document.getElementById("cursor");
-          selection = select(cursor);
           document.addEventListener('keydown', keyHandler);
+          var div = newDiv();
+          document.getElementById("list1").appendChild(div);
+          selection = select(div);
       }
     </script>
   </head>
   <body onload="init()">
     <div id="container" class="list-outer">
       <div id="list1" class="list">
-        <div id="cursor" class="list-end-cursor"></div>
       </div>
     </div>
   </body>
