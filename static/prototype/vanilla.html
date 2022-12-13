@@ -56,6 +56,9 @@
 
       function unselect(e) {
           styleUnselect(e);
+          if (e.innerText === "") {
+              e.remove();
+          }
           selection = null;
       }
 
