@@ -5,6 +5,10 @@
     <script type="text/javascript">
       var selection = null;
 
+      function noMods(eve) {
+          return !(eve.altKey || eve.ctrlKey || eve.metaKey || eve.shiftKey);
+      }
+
       function keyHandler(eve) {
           if (eve.ctrlKey || eve.altKey) {
               //TODO
@@ -15,17 +19,21 @@
                      (eve.keyCode > 185 && eve.keyCode < 193) ||  // ;=,-./`
                      (eve.keyCode > 218 && eve.keyCode < 223)) {  // [\]'
               appendSelection(eve.key);
-          } else if (eve.keyCode === 8) { //Backspace
+          } else if (noMods(eve) && eve.keyCode === 8) { //Backspace (no modifiers)
               backspace();
-          } else if (eve.keyCode === 13) { //\n
+          } else if (noMods(eve) && eve.keyCode === 13) { //\n (no modifiers)
               addAndSelectAfter(selection);
-          } else if (eve.keyCode === 38) { //Up
+          } else if (noMods(eve) && eve.keyCode === 38) { //Up (no modifiers)
               if (selection.previousElementSibling) {
                   selection = select(selection.previousElementSibling);
+              } else {
+                  addAndSelectBefore(selection);
               }
-          } else if (eve.keyCode === 40) { //Down
+          } else if (noMods(eve) && eve.keyCode === 40) { //Down (no modifiers)
               if (selection.nextElementSibling) {
                   selection = select(selection.nextElementSibling);
+              } else {
+                  addAndSelectAfter(selection);
               }
           } else {
               console.log(eve);
@@ -91,6 +99,12 @@
       function addAndSelectAfter(e) {
           var div = newDiv();
           e.after(div);
+          selection = select(div);
+      }
+
+      function addAndSelectBefore(e) {
+          var div = newDiv();
+          e.before(div);
           selection = select(div);
       }
 
