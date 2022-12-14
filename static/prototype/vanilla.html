@@ -59,6 +59,16 @@
               } else {
                   addAndSelectAfter(selection);
               }
+          //Up (ctrl+shift)
+          } else if (exactMods(eve, ['ctrl', 'shift']) && eve.keyCode === 38) {
+              if (selection.previousElementSibling) {
+                  selection.previousElementSibling.before(selection);
+              }
+          //Down (ctrl+shift)
+          } else if (exactMods(eve, ['ctrl', 'shift']) && eve.keyCode === 40) {
+              if (selection.nextElementSibling) {
+                  selection.nextElementSibling.after(selection);
+              }
           //Log what falls through
           } else {
               console.log(eve);
