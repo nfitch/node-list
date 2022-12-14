@@ -9,32 +9,57 @@
           return !(eve.altKey || eve.ctrlKey || eve.metaKey || eve.shiftKey);
       }
 
+      // There's probably a more efficient way to do this...
+      function exactMods(eve, mods) {
+          var posMods = ['alt', 'ctrl', 'meta', 'shift'];
+          var ret = 1;
+          for (var i = 0; i < posMods.length; ++i) {
+              var mod = posMods[i];
+              if (mods.includes(mod)) {
+                  //Has to be set
+                  ret &= eve[mod + 'Key'];
+              } else {
+                  //Has to not be set
+                  ret &= !(eve[mod + 'Key']);
+              }
+          }
+          return ret;
+      }
+
       function keyHandler(eve) {
-          if (eve.ctrlKey || eve.altKey) {
-              //TODO
-          } else if ((eve.keyCode > 47 && eve.keyCode < 58) ||    // numbers
-                     eve.keyCode == 32 ||                         // spacebar
-                     (eve.keyCode > 64 && eve.keyCode < 91) ||    // letters
-                     (eve.keyCode > 95 && eve.keyCode < 112) ||   // numpad
-                     (eve.keyCode > 185 && eve.keyCode < 193) ||  // ;=,-./`
-                     (eve.keyCode > 218 && eve.keyCode < 223)) {  // [\]'
+          //Regular Typing, append to selected cell
+          if ((noMods(eve) || exactMods(eve, ['shift'])) && (
+              (eve.keyCode > 47 && eve.keyCode < 58) ||    // numbers
+              eve.keyCode == 32 ||                         // spacebar
+              (eve.keyCode > 64 && eve.keyCode < 91) ||    // letters
+              (eve.keyCode > 95 && eve.keyCode < 112) ||   // numpad
+              (eve.keyCode > 185 && eve.keyCode < 193) ||  // ;=,-./`
+              (eve.keyCode > 218 && eve.keyCode < 223))) {  // [\]'
               appendSelection(eve.key);
-          } else if (noMods(eve) && eve.keyCode === 8) { //Backspace (no modifiers)
+          //Backspace (no modifiers)
+          } else if (noMods(eve) && eve.keyCode === 8) {
               backspace();
-          } else if (noMods(eve) && eve.keyCode === 13) { //\n (no modifiers)
+          //\n (no modifiers)
+          } else if (noMods(eve) && eve.keyCode === 13) {
               addAndSelectAfter(selection);
-          } else if (noMods(eve) && eve.keyCode === 38) { //Up (no modifiers)
+          //\n (+shift)
+          } else if (exactMods(eve, ['shift']) && eve.keyCode === 13) {
+              //TODO: Make multi line in cell
+          //Up (no modifiers)
+          } else if (noMods(eve) && eve.keyCode === 38) {
               if (selection.previousElementSibling) {
                   selection = select(selection.previousElementSibling);
               } else {
                   addAndSelectBefore(selection);
               }
-          } else if (noMods(eve) && eve.keyCode === 40) { //Down (no modifiers)
+          //Down (no modifiers)
+          } else if (noMods(eve) && eve.keyCode === 40) {
               if (selection.nextElementSibling) {
                   selection = select(selection.nextElementSibling);
               } else {
                   addAndSelectAfter(selection);
               }
+          //Log what falls through
           } else {
               console.log(eve);
           }
