@@ -76,13 +76,33 @@
                   //TODO: Select at the same "level"
                   selection = select(selection.parentElement.nextSibling.firstChild);
               } else {
-                  addListRight(selection);
+                  addEmptyListRight(selection);
               }
           //Left (no modifiers)
           } else if (noMods(eve) && eve.keyCode === 37) {
               if (selection.parentElement.previousSibling) {
                   //TODO: Select at the same "level"
                   selection = select(selection.parentElement.previousSibling.firstChild);
+              } else {
+                  addEmptyListLeft(selection);
+              }
+          //Right (ctrl+shift)
+          } else if (exactMods(eve, ['ctrl', 'shift']) && eve.keyCode === 39) {
+              if (selection.parentElement.nextSibling) {
+                  //TODO: Move at the same "level"
+                  var parentElement = selection.parentElement;
+                  parentElement.nextSibling.lastChild.after(selection);
+                  collapse(parentElement);
+              } else {
+                  addListRight(selection);
+              }
+          //Left (ctrl+shift)
+          } else if (exactMods(eve, ['ctrl', 'shift']) && eve.keyCode === 37) {
+              if (selection.parentElement.previousSibling) {
+                  //TODO: Select at the same "level"
+                  var parentElement = selection.parentElement;
+                  selection.parentElement.previousSibling.lastChild.after(selection);
+                  collapse(parentElement);
               } else {
                   addListLeft(selection);
               }
@@ -142,9 +162,7 @@
           if (e.innerText === "") {
               e.remove();
           }
-          if(parentElement.children.length === 0) {
-              parentElement.remove();
-          }
+          collapse(parentElement);
           //End auto-collapse
           selection = null;
       }
@@ -156,7 +174,7 @@
           return div;
       }
 
-      function addListRight(e) {
+      function addEmptyListRight(e) {
           var elementDiv = newElementDiv();
           var listDiv = newListDiv();
           listDiv.appendChild(elementDiv);
@@ -165,13 +183,37 @@
           return elementDiv;
       }
 
-      function addListLeft(e) {
+      function addEmptyListLeft(e) {
           var elementDiv = newElementDiv();
           var listDiv = newListDiv();
           listDiv.appendChild(elementDiv);
           e.parentElement.before(listDiv);
           selection = select(elementDiv);
           return elementDiv;
+      }
+
+      function addListRight(selection) {
+          var listDiv = newListDiv();
+          var parentElement = selection.parentElement;
+          selection.parentElement.after(listDiv);
+          listDiv.appendChild(selection);
+          collapse(parentElement);
+          return selection;
+      }
+
+      function addListLeft(selection) {
+          var listDiv = newListDiv();
+          var parentElement = selection.parentElement;
+          selection.parentElement.before(listDiv);
+          listDiv.appendChild(selection);
+          collapse(parentElement);
+          return selection;
+      }
+
+      function collapse(ele) {
+          if (ele && ele.children.length === 0) {
+              ele.remove();
+          }
       }
 
       //---- Element Div Manipulations ----
