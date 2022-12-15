@@ -73,25 +73,28 @@
           //Right (no modifiers)
           } else if (noMods(eve) && eve.keyCode === 39) {
               if (selection.parentElement.nextSibling) {
-                  //TODO: Select at the same "level"
-                  selection = select(selection.parentElement.nextSibling.firstChild);
+                  var ele = findClosest(
+                      selection, selection.parentElement.nextSibling);
+                  selection = select(ele);
               } else {
                   addEmptyListRight(selection);
               }
           //Left (no modifiers)
           } else if (noMods(eve) && eve.keyCode === 37) {
               if (selection.parentElement.previousSibling) {
-                  //TODO: Select at the same "level"
-                  selection = select(selection.parentElement.previousSibling.firstChild);
+                  var ele = findClosest(
+                      selection, selection.parentElement.previousSibling);
+                  selection = select(ele);
               } else {
                   addEmptyListLeft(selection);
               }
           //Right (ctrl+shift)
           } else if (exactMods(eve, ['ctrl', 'shift']) && eve.keyCode === 39) {
               if (selection.parentElement.nextSibling) {
-                  //TODO: Move at the same "level"
                   var parentElement = selection.parentElement;
-                  parentElement.nextSibling.lastChild.after(selection);
+                  var ele = findClosest(
+                      selection, parentElement.nextSibling);
+                  moveBeforeOrAfter(ele, selection);
                   collapse(parentElement);
               } else {
                   addListRight(selection);
@@ -99,9 +102,10 @@
           //Left (ctrl+shift)
           } else if (exactMods(eve, ['ctrl', 'shift']) && eve.keyCode === 37) {
               if (selection.parentElement.previousSibling) {
-                  //TODO: Select at the same "level"
                   var parentElement = selection.parentElement;
-                  selection.parentElement.previousSibling.lastChild.after(selection);
+                  var ele = findClosest(
+                      selection, parentElement.previousSibling);
+                  moveBeforeOrAfter(ele, selection);
                   collapse(parentElement);
               } else {
                   addListLeft(selection);
@@ -129,6 +133,28 @@
                       selection = select(toSelect);
                   }
               }
+          }
+      }
+
+      function findClosest(ele, list) {
+          var rect = ele.getBoundingClientRect();
+          var y = rect.y;
+          var ch = list.firstChild;
+          while(ch.nextSibling !== null &&
+                y > ch.getBoundingClientRect().y) {
+              ch = ch.nextSibling;
+          }
+          return ch;
+      }
+
+      //Sometimes we move it before, other times after...
+      function moveBeforeOrAfter(ele, selection) {
+          var ey = ele.getBoundingClientRect().y;
+          var sy = selection.getBoundingClientRect().y;
+          if (sy <= ey) {
+              ele.before(selection);
+          } else {
+              ele.after(selection);
           }
       }
 
