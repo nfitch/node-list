@@ -43,6 +43,8 @@
     border-color: #BEBEBE;
     border-style: solid;
     border-radius: 3px;
+    /* shows newlines in elements rather than dealing with <br/>s */
+    white-space: pre;
 
     border-width: 1px;
     padding: 2px;

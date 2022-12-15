@@ -5,6 +5,7 @@
     <script type="text/javascript">
       var selection = null;
 
+      //---- Keyboard Event Handling ----
       function noMods(eve) {
           return !(eve.altKey || eve.ctrlKey || eve.metaKey || eve.shiftKey);
       }
@@ -41,23 +42,23 @@
               backspace();
           //\n (no modifiers)
           } else if (noMods(eve) && eve.keyCode === 13) {
-              addAndSelectAfter(selection);
+              addElementAndSelectAfter(selection);
           //\n (+shift)
           } else if (exactMods(eve, ['shift']) && eve.keyCode === 13) {
-              //TODO: Make multi line in cell
+              appendSelection('\n');
           //Up (no modifiers)
           } else if (noMods(eve) && eve.keyCode === 38) {
               if (selection.previousElementSibling) {
                   selection = select(selection.previousElementSibling);
               } else {
-                  addAndSelectBefore(selection);
+                  addElementAndSelectBefore(selection);
               }
           //Down (no modifiers)
           } else if (noMods(eve) && eve.keyCode === 40) {
               if (selection.nextElementSibling) {
                   selection = select(selection.nextElementSibling);
               } else {
-                  addAndSelectAfter(selection);
+                  addElementAndSelectAfter(selection);
               }
           //Up (ctrl+shift)
           } else if (exactMods(eve, ['ctrl', 'shift']) && eve.keyCode === 38) {
@@ -69,12 +70,49 @@
               if (selection.nextElementSibling) {
                   selection.nextElementSibling.after(selection);
               }
+          //Right (no modifiers)
+          } else if (noMods(eve) && eve.keyCode === 39) {
+              if (selection.parentElement.nextSibling) {
+                  //TODO: Select at the same "level"
+                  selection = select(selection.parentElement.nextSibling.firstChild);
+              } else {
+                  addListRight(selection);
+              }
+          //Left (no modifiers)
+          } else if (noMods(eve) && eve.keyCode === 37) {
+              if (selection.parentElement.previousSibling) {
+                  //TODO: Select at the same "level"
+                  selection = select(selection.parentElement.previousSibling.firstChild);
+              } else {
+                  addListLeft(selection);
+              }
           //Log what falls through
           } else {
               console.log(eve);
           }
       }
 
+      function backspace() {
+          if (selection) {
+              //Is a div, has text, take off the last character
+              if (selection.innerText !== "") {
+                  selection.innerText = selection.innerText.slice(0, -1);
+              } else {
+                  //Remove until there's only a blank element
+                  if (selection.previousElementSibling !== null) {
+                      toSelect = selection.previousElementSibling;
+                      selection.remove();
+                      selection = select(toSelect);
+                  } else if (selection.nextElementSibling !== null) {
+                      toSelect = selection.nextElementSibling;
+                      selection.remove();
+                      selection = select(toSelect);
+                  }
+              }
+          }
+      }
+
+      //---- Selecting functions w/styling ----
       function styleSelect(div) {
           div.style.borderWidth = 2;
           div.style.margin = 1;
@@ -99,46 +137,58 @@
 
       function unselect(e) {
           styleUnselect(e);
+          //Auto-collapse
+          var parentElement = e.parentElement;
           if (e.innerText === "") {
               e.remove();
           }
+          if(parentElement.children.length === 0) {
+              parentElement.remove();
+          }
+          //End auto-collapse
           selection = null;
       }
 
-      function backspace() {
-          if (selection) {
-              //Is a div, has text, take off the last character
-              if (selection.innerText !== "") {
-                  selection.innerText = selection.innerText.slice(0, -1);
-              } else {
-                  //Remove until there's only a blank element
-                  if (selection.previousElementSibling !== null) {
-                      toSelect = selection.previousElementSibling;
-                      selection.remove();
-                      selection = select(toSelect);
-                  } else if (selection.nextElementSibling !== null) {
-                      toSelect = selection.nextElementSibling;
-                      selection.remove();
-                      selection = select(toSelect);
-                  }
-              }
-          }
+      //---- List Div Manipulations ----
+      function newListDiv() {
+          var div = document.createElement('div');
+          div.classList.add('list');
+          return div;
       }
 
-      function newDiv() {
+      function addListRight(e) {
+          var elementDiv = newElementDiv();
+          var listDiv = newListDiv();
+          listDiv.appendChild(elementDiv);
+          e.parentElement.after(listDiv);
+          selection = select(elementDiv);
+          return elementDiv;
+      }
+
+      function addListLeft(e) {
+          var elementDiv = newElementDiv();
+          var listDiv = newListDiv();
+          listDiv.appendChild(elementDiv);
+          e.parentElement.before(listDiv);
+          selection = select(elementDiv);
+          return elementDiv;
+      }
+
+      //---- Element Div Manipulations ----
+      function newElementDiv() {
           var div = document.createElement('div');
           div.classList.add('list-element');
           return div;
       }
 
-      function addAndSelectAfter(e) {
-          var div = newDiv();
+      function addElementAndSelectAfter(e) {
+          var div = newElementDiv();
           e.after(div);
           selection = select(div);
       }
 
-      function addAndSelectBefore(e) {
-          var div = newDiv();
+      function addElementAndSelectBefore(e) {
+          var div = newElementDiv();
           e.before(div);
           selection = select(div);
       }
@@ -148,18 +198,18 @@
           selection.innerHTML += s;
       }
 
+      //---- Init ----
       function init() {
           document.addEventListener('keydown', keyHandler);
-          var div = newDiv();
-          document.getElementById("list1").appendChild(div);
-          selection = select(div);
+          var elementDiv = newElementDiv();
+          selection = select(elementDiv);
+          var listDiv = newListDiv();
+          listDiv.appendChild(elementDiv)
+          document.getElementById("list-outer").appendChild(listDiv);
       }
     </script>
   </head>
   <body onload="init()">
-    <div id="container" class="list-outer">
-      <div id="list1" class="list">
-      </div>
-    </div>
+    <div id="list-outer" class="list-outer"></div>
   </body>
 </html>
