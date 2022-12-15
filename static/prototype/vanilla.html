@@ -4,6 +4,8 @@
     <link rel="stylesheet" href="styling.css">
     <script type="text/javascript">
       var selection = null;
+      var KELEMENT = 'type-kelement';
+      var KLIST = 'type-klist';
 
       //---- Keyboard Event Handling ----
       function noMods(eve) {
@@ -28,10 +30,53 @@
       }
 
       function keyHandler(eve) {
+          if (selection && selection.ktype === KELEMENT) {
+              keyHandlerElement(eve);
+          } else if (selection && selection.ktype === KLIST) {
+              keyHandlerList(eve);
+          }
+      }
+
+      function keyHandlerList(eve) {
+          //Up (no modifiers)
+          if (noMods(eve) && eve.keyCode === 38) {
+              selection = select(selection.lastChild);
+          //Down (no modifiers)
+          } else if (noMods(eve) && eve.keyCode === 40) {
+              selection = select(selection.firstChild);
+          //Right (no modifiers)
+          } else if (noMods(eve) && eve.keyCode === 39) {
+              if (selection.nextSibling) {
+                  selection = select(selection.nextSibling);
+              }
+          //Left (no modifiers)
+          } else if (noMods(eve) && eve.keyCode === 37) {
+              if (selection.previousSibling) {
+                  selection = select(selection.previousSibling);
+              }
+          //Right (ctrl+shift)
+          } else if (exactMods(eve, ['ctrl', 'shift']) && eve.keyCode === 39) {
+              if (selection.nextSibling) {
+                  selection.nextSibling.after(selection);
+              }
+          //Left (ctrl+shift)
+          } else if (exactMods(eve, ['ctrl', 'shift']) && eve.keyCode === 37) {
+              if (selection.previousSibling) {
+                  selection.previousSibling.before(selection);
+              }
+          //Log what falls through
+          } else {
+              console.log(eve);
+          }
+      }
+
+      function keyHandlerElement(eve) {
           //Regular Typing, append to selected cell
           if ((noMods(eve) || exactMods(eve, ['shift'])) && (
               (eve.keyCode > 47 && eve.keyCode < 58) ||    // numbers
               eve.keyCode == 32 ||                         // spacebar
+              eve.keyCode == 61 ||                         // =
+              eve.keyCode == 173 ||                        // -
               (eve.keyCode > 64 && eve.keyCode < 91) ||    // letters
               (eve.keyCode > 95 && eve.keyCode < 112) ||   // numpad
               (eve.keyCode > 185 && eve.keyCode < 193) ||  // ;=,-./`
@@ -51,14 +96,23 @@
               if (selection.previousElementSibling) {
                   selection = select(selection.previousElementSibling);
               } else {
-                  addElementAndSelectBefore(selection);
+                  //Going off the "top", then we select the container
+                  if (selection.innerText === "") {
+                      selection = select(selection.parentElement);
+                  } else {
+                      addElementAndSelectBefore(selection);
+                  }
               }
           //Down (no modifiers)
           } else if (noMods(eve) && eve.keyCode === 40) {
               if (selection.nextElementSibling) {
                   selection = select(selection.nextElementSibling);
               } else {
-                  addElementAndSelectAfter(selection);
+                  if (selection.innerText === "") {
+                      selection = select(selection.parentElement);
+                  } else {
+                      addElementAndSelectAfter(selection);
+                  }
               }
           //Up (ctrl+shift)
           } else if (exactMods(eve, ['ctrl', 'shift']) && eve.keyCode === 38) {
@@ -197,6 +251,7 @@
       function newListDiv() {
           var div = document.createElement('div');
           div.classList.add('list');
+          div.ktype = KLIST;
           return div;
       }
 
@@ -246,6 +301,7 @@
       function newElementDiv() {
           var div = document.createElement('div');
           div.classList.add('list-element');
+          div.ktype = KELEMENT;
           return div;
       }
 
