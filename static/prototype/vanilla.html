@@ -6,6 +6,7 @@
       var selection = null;
       var KELEMENT = 'type-kelement';
       var KLIST = 'type-klist';
+      var DEBUG = false;
 
       //---- Keyboard Event Handling ----
       function noMods(eve) {
@@ -66,7 +67,7 @@
               }
           //Log what falls through
           } else {
-              console.log(eve);
+              if (DEBUG) { console.log(eve) };
           }
       }
 
@@ -149,7 +150,7 @@
                   var ele = findClosest(
                       selection, parentElement.nextSibling);
                   moveBeforeOrAfter(ele, selection);
-                  collapse(parentElement);
+                  tryCollapse(parentElement);
               } else {
                   addListRight(selection);
               }
@@ -160,13 +161,13 @@
                   var ele = findClosest(
                       selection, parentElement.previousSibling);
                   moveBeforeOrAfter(ele, selection);
-                  collapse(parentElement);
+                  tryCollapse(parentElement);
               } else {
                   addListLeft(selection);
               }
           //Log what falls through
           } else {
-              console.log(eve);
+              if (DEBUG) { console.log(eve) };
           }
       }
 
@@ -220,14 +221,6 @@
           return div;
       }
 
-      function select(e) {
-          if (selection) {
-              unselect(selection);
-          }
-          styleSelect(e);
-          return e;
-      }
-
       function styleUnselect(div) {
           div.style.borderWidth = 1;
           div.style.margin = 2;
@@ -235,16 +228,53 @@
           return div;
       }
 
-      function unselect(e) {
-          styleUnselect(e);
-          //Auto-collapse
-          var parentElement = e.parentElement;
-          if (e.innerText === "") {
-              e.remove();
+      function select(e) {
+          var oldSelection = selection;
+          selection = e;
+          styleSelect(selection);
+          if (oldSelection) {
+              styleUnselect(oldSelection);
+              tryCollapse(oldSelection.parentElement);
+              tryCollapse(oldSelection);
           }
-          collapse(parentElement);
-          //End auto-collapse
-          selection = null;
+          return selection;
+      }
+
+      function tryCollapse(e) {
+          if (!e) {
+              return true;
+          }
+
+          //We don't want to collapse when there's only one
+          // "empty" element and either the element or the
+          // list is selected.
+          if (e.ktype === KELEMENT &&
+              selection === e.parentElement &&
+              e.parentElement.children.length === 1) {
+              return false;
+          } else if (e.ktype === KLIST &&
+                     selection === e.firstChild &&
+                     e.children.length === 1) {
+              return false;
+          }
+
+          //Collapse the list or the element
+          if (e.ktype === KLIST) {
+              if (e.children.length === 1) {
+                  if (tryCollapse(e.firstChild)) {
+                      e.remove();
+                      return true;
+                  }
+              } else if (e.children.length === 0) {
+                  e.remove();
+                  return true;
+              }
+          } else if (e.ktype === KELEMENT) {
+              if (e.innerText === "") {
+                  e.remove();
+                  return true;
+              }
+          }
       }
 
       //---- List Div Manipulations ----
@@ -278,7 +308,7 @@
           var parentElement = selection.parentElement;
           selection.parentElement.after(listDiv);
           listDiv.appendChild(selection);
-          collapse(parentElement);
+          tryCollapse(parentElement);
           return selection;
       }
 
@@ -287,14 +317,8 @@
           var parentElement = selection.parentElement;
           selection.parentElement.before(listDiv);
           listDiv.appendChild(selection);
-          collapse(parentElement);
+          tryCollapse(parentElement);
           return selection;
-      }
-
-      function collapse(ele) {
-          if (ele && ele.children.length === 0) {
-              ele.remove();
-          }
       }
 
       //---- Element Div Manipulations ----
