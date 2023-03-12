@@ -4,14 +4,19 @@ List APIs
 These is the short hand examples of the list API.  Read the JSON spec for
 details.
 
+# TODO
+1. `etag` / `if-match`.
+
 # Common Fields
-* `owner`: Everything has an owner.  Everything is prefixed by an owner.
+* `user`: Everything has a user.  Everything is prefixed by a user.
 
-# Owners
+# Users
 
-## (CreateOwner)
+User ids are globally unique.  Choose wisely.
+
+## (CreateOrUpdateUser) Create / Update a User.
 ```
-POST /owners/{id}
+PUT /20230311/users/{id}
 {
    "id": "[id]",
    "name": "[name]",
@@ -23,23 +28,30 @@ POST /owners/{id}
 
 # Lists
 
-## (CreateList) Create List
+List Ids are unique for a user and are specified by the user.  They cannot be
+changed, so choose wisely.  Or clone and delete.
+
+## (CreateOrUpdateList) Create or Update List
 ```
-POST /lists/{owner}/{id}
+PUT /20230311/lists/{user}/{id}
 {
-   "id": "[id]"
+   "id": "[id]",
+   "data": "[data]
 }
 
 200 OK
 ```
 
 ## (GetList) Get List
+TODO: Pagination?
 ```
-GET /lists/{owner}/{id}
+GET /20230311/lists/{user}/{id}
 
+200 OK
 {
-   "owner": "[owner]",
+   "user": "[user]",
    "id": "[id]",
+   "data": "[data]",
    "elements": [
       { "id": "[id]", "value": "[value]" },
       ...
@@ -49,17 +61,18 @@ GET /lists/{owner}/{id}
 
 ## (DeleteList) Delete List
 ```
-DELETE /lists/{owner}/{id}
+DELETE /20230311/lists/{user}/{id}
 
 200 OK
 ```
 
 ## (ListLists) List Lists
 ```
-GET /lists/{owner}
+GET /20230311/lists/{user}
 
+200 OK
 {
-   "owner": "[owner]",
+   "user": "[user]",
    "lists": [
       { "id": "[id]" },
       ...
@@ -69,9 +82,9 @@ GET /lists/{owner}
 
 ## (CloneList) Clone an existing list
 ```
-POST /lists/{owner}/{id}
+POST /20230311/lists/{user}/{id}/actions/clone
 {
-   "newOwner": "[owner]",
+   "newUser": "[user]", #optional
    "newId": "[id]",
 }
 
@@ -88,6 +101,8 @@ Elements never exist independently of a list.  They only exist in one list at a
 time.  They are created and managed in the context of an "owning" list.  Moving
 an element from one list to another changes element ownership.
 
+Element Ids are created by the system.
+
 List element data should mostly be accessed via Views (deep gets).
 
 ## (CreateElement) Creates a new Element
@@ -95,32 +110,38 @@ List element data should mostly be accessed via Views (deep gets).
 * At an Index
 * After Element (by id)
 * Before Element (by id)
+
+Be sure you include a retry token for idempotency.
 ```
-POST /elements/{owner}/{list}
+x-retry-token: [string]
+
+POST /20230311/elements/{user}/{list}
 {
    "data": "[data]"
    "index": "[index]" #int, optional
-   "after": "[element_id]", #optional
-   "before": "[element_id]", #optional
+   "after": "[elementId]", #optional
+   "before": "[elementId]", #optional
 }
 
+200 OK
 {
-   "owner": "[owner_id]",
-   "list": "[list_id]",
+   "user": "[userId]",
+   "list": "[listId]",
    "id": "[id]",
    "data": "[data]",
-   "previous": "[element_id]", #can be null
-   "next": "[element_id]", #can be null
+   "previous": "[elementId]", #can be null
+   "next": "[elementId]", #can be null
 }
 ```
 
 ## (GetElement) Get an Element
 ```
-GET /elements/{owner}/{list}/{id}
+GET /20230311/elements/{user}/{list}/{id}
 
+200 OK
 {
-   "owner": "[owner_id]",
-   "list": "[list_id]",
+   "user": "[userId]",
+   "list": "[listId]",
    "id": "[id]",
    "data": "[data]"
 }
@@ -128,7 +149,7 @@ GET /elements/{owner}/{list}/{id}
 
 ## (UpdateElement) Update List Element Data
 ```
-PUT /elements/{owner}/{list}/{id}
+PUT /20230311/elements/{user}/{list}/{id}
 {
    "data": "[data]"
 }
@@ -143,13 +164,13 @@ PUT /elements/{owner}/{list}/{id}
 * Before Element (by id)
 * List is optional
 ```
-POST /elements/{owner}/{list}/{id}
+POST /20230311/elements/{user}/{list}/{id}/actions/move
 {
    "index": "[index]" #int, optional
-   "after": "[element_id]", #optional
-   "before": "[element_id]", #optional
-   "newOwner": "[owner]", #optional, must also have new list id
-   "newListId": "[list_id]", #optional, must also have new owner
+   "after": "[elementId]", #optional
+   "before": "[elementId]", #optional
+   "newUser": "[user]", #optional, must also have new list id
+   "newListId": "[listId]", #optional, must also have new user
 }
 
 200 OK
@@ -157,7 +178,7 @@ POST /elements/{owner}/{list}/{id}
 
 ## (DeleteElement) Remove an element from a list
 ```
-DELETE /elements/{owner}/{list}/{id}
+DELETE /20230311/elements/{user}/{list}/{id}
 
 200 OK
 ```
@@ -165,31 +186,33 @@ DELETE /elements/{owner}/{list}/{id}
 # Views
 
 Views contain a list of references to Lists.  A List can be included in many
-Views.
+Views.  View Ids are unique per user and aren't changeable.  Choose wisely.
+Or clone and delete.
 
-## (CreateView) Create a View
+## (CreateOrUpdateView) Create / Update a View
 ```
-POST /views/{owner}/{id}
+PUT /20230311/views/{user}/{id}
 {
    "id": "[id]"
    "description": "[description]" #optional
    "lists": [
       {
-         "owner": "[owner]", #optional, assumed same as path owner if omitted
-         "list_id": "[list_id]"
+         "user": "[user]", #optional, assumed same as path user if omitted
+         "listId": "[listId]"
       },
       ...
    ]
 }
 
+200 OK
 {
-   "owner": "[owner]",
+   "user": "[user]",
    "id": "[id]",
    "description": "[description]"
    "lists": [
       {
-         "owner": "[owner]", #optional, assumed same as path owner if omitted
-         "list_id": "[list_id]"
+         "user": "[user]", #optional, assumed same as path user if omitted
+         "listId": "[listId]"
       },
       ...
    ]
@@ -198,16 +221,17 @@ POST /views/{owner}/{id}
 
 ## (GetView) Get a View
 ```
-GET /views/{owner}/{id}
+GET /20230311/views/{user}/{id}
 
+200 OK
 {
-   "owner": "[owner]",
+   "user": "[user]",
    "id": "[id]",
    "description": "[description]"
    "lists": [
       {
-         "owner": "[owner]", #optional, assumed same as path owner if omitted
-         "list_id": "[list_id]"
+         "user": "[user]", #optional, assumed same as path user if omitted
+         "listId": "[listId]"
       },
       ...
    ]
@@ -216,7 +240,7 @@ GET /views/{owner}/{id}
 
 ## (DeleteView) Delete a View
 ```
-DELETE /views/{owner}/{id}
+DELETE /20230311/views/{user}/{id}
 
 200 OK
 ```
@@ -226,13 +250,47 @@ DELETE /views/{owner}/{id}
 * At an Index
 * After List (by id)
 * Before List (by id)
+```
+PUT /20230311/views/{user}/{id}/lists/{listId}
+{
+   "index": "[index]" #int, optional
+   "after": "[listId]", #optional
+   "before": "[listId]" #optional
+}
+
+200 OK
+```
 
 ## (RemoveListFromView) Remove a list from a View
+```
+DELETE /20230311/views/{user}/{id}/lists/{listId}
+
+200 OK
+```
 
 ## (MoveListInView) Move a List in a View
 * At End (default)
 * At an Index
 * After List (by id)
 * Before List (by id)
+```
+POST /20230311/views/{user}/{id}/lists/{listId}/actions/move
+{
+   "index": "[index]" #int, optional
+   "after": "[listId]", #optional
+   "before": "[listId]" #optional
+}
+
+200 OK
+```
 
 ## (CloneView) Clones a View
+```
+POST /20230311/views/{user}/{id}/actions/clone
+{
+   "newUser": "[user]", #optional
+   "newId": "[id]",
+}
+
+200 OK
+```
